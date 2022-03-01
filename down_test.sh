@@ -1,5 +1,6 @@
-#!/bin/zsh
-source activate speedtest
+#!/bin/sh
+source /opt/anaconda3/etc/profile.d/conda.sh
+conda activate speedtest
 datestamp=$(date '+%Y-%m-%d')
 yesterday=$(date -v-1d '+%Y-%m-%d')
 fname="$datestamp.csv"

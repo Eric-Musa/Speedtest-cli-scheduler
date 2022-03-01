@@ -4,10 +4,21 @@
 	<dict>
 		<key>Label</key>
 		<string>com.eric.speedtest.periodic</string>
-		<key>Program</key>
-		<string>/Users/ericmusa/Documents/Coding/Speedtest-cli-scheduler/down_test.sh</string>
+		
+		<key>ProgramArguments</key>
+		<array>
+			<string>/bin/sh</string>
+			<string>/Users/ericmusa/Documents/Coding/Speedtest-cli-scheduler/down_test.sh</string>
+		</array>
+		
 		<key>WorkingDirectory</key>
 		<string>/Users/ericmusa/Documents/Coding/Speedtest-cli-scheduler/</string>
+		
+		<!-- <key>StandardOutPath</key>
+		<string>/Users/ericmusa/Documents/Coding/Speedtest-cli-scheduler/stdout.txt</string>
+		<key>StandardErrorPath</key>
+		<string>/Users/ericmusa/Documents/Coding/Speedtest-cli-scheduler/stderr.txt</string> -->
+		
 		<key>RunAtLoad</key>
 		<true/>
 		<key>StartInterval</key>
