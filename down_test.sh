@@ -7,12 +7,13 @@ fname="$datestamp.csv"
 yname="$yesterday.csv"
 
 if [ -f $fname ]; then
-    if [ -f $yname ]; then
-        echo "AGGREGATING DATA FROM YESTERDAY ($yesterday) <not really, not yet>"
-    fi
     echo "running speedtest-cli and saving to $fname"
     echo $(date '+%s'),`speedtest-cli --csv` >> $fname
 else
+    if [ -f $yname ]; then  # only aggregate yesterday's data if first time running speedtest today
+        echo "AGGREGATING DATA FROM YESTERDAY ($yesterday) <not really, not yet>"
+        python aggregate.py
+    fi
     echo "creating $fname and saving speedtest-cli data to it"
     echo $datestamp,`speedtest-cli --csv-header` >> $fname
     echo $(date '+%s'),`speedtest-cli --csv` >> $fname
