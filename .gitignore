@@ -2,6 +2,7 @@
 *.db
 local/
 archive/
+aggregations/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
