@@ -37,33 +37,43 @@ def get_up_low_bounds(values, extend=0.5):
     return [low, up]
 
 
-if __name__ == '__main__':
-    today = datetime.today()
-    yesterday = today - timedelta(days=1)
+def main(today=None, yesterday=None, debug=True):
+    today = today or datetime.today()
+    today = datetime(today.year, today.month, today.day, 0, 0, 0, 0)
+    yesterday = yesterday or today - timedelta(days=1)
 
     today_str = datetime.strftime(today, date_format)
     yesterday_str = datetime.strftime(yesterday, date_format)
 
-    print('today:', today_str)
-    print('yesterday:', yesterday_str)
-
-    assert not os.path.isfile(csv_template % today_str) and os.path.isfile(csv_template % yesterday_str)
+    if debug:
+        print('today:', today_str)
+        print('yesterday:', yesterday_str)
+    
+    assert debug or (not os.path.isfile(csv_template % today_str) and os.path.isfile(csv_template % yesterday_str))
     # Today's file should not exist yet but yesterday's should
     
-    ydata = pd.read_csv(csv_template % yesterday_str, names=header, skiprows=1, usecols=cols)
+    ydata = pd.read_csv(csv_template % yesterday_str, names=header, skiprows=1, usecols=cols).dropna()
     ydata[['Download (Mbps)', 'Upload (Mbps)']] = ydata[['Download (Mbps)', 'Upload (Mbps)']].apply(lambda _: _*1e-6)
     ydata['Datestamp'] = ydata['Datestamp'].apply(lambda _: datetime.fromtimestamp(_))
     print(ydata)
 
-    shutil.move(csv_template % yesterday_str, os.path.join('archive', csv_template % yesterday_str))
+    if not debug:
+        shutil.move(csv_template % yesterday_str, os.path.join('archive', csv_template % yesterday_str))
 
     datestamps = ydata['Datestamp'].values
     downloads = ydata['Download (Mbps)'].values
     uploads = ydata['Upload (Mbps)'].values
 
     fig, [ax1, ax2] = plt.subplots(2, 1)
-    fig.suptitle('Download and Upload Speeds (Mbps) on %s' % today_str)
+    fig.suptitle('Download and Upload Speeds (Mbps) on %s' % yesterday_str)
 
+    for ax in [ax1, ax2]:
+        ax.set_xlim(yesterday, today)
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %d, %H:%M'))
+        # Rotates and right-aligns the x labels so they don't crowd each other.
+        for label in ax.get_xticklabels(which='major'):
+            label.set(rotation=30, horizontalalignment='right')
+    
     ax1.set_title('Downloads', loc='left', y=0.01, x=0.01, fontsize='small')
     ax1.plot(datestamps, downloads)
     ax1.set_ylim(get_up_low_bounds(downloads))
@@ -83,14 +93,13 @@ if __name__ == '__main__':
     ax2.legend(loc="upper left")
     # fig.show()
 
-    for ax in [ax1, ax2]:
-        ax.set_xlim(yesterday, today)
-        ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
-        # Rotates and right-aligns the x labels so they don't crowd each other.
-        for label in ax.get_xticklabels(which='major'):
-            label.set(rotation=30, horizontalalignment='right')
 
     fig.tight_layout()
-    # fig.show()
-    plt.savefig(png_template % yesterday)
-    plt.close()
+    if debug:
+        fig.show()
+    else:
+        plt.savefig(png_template % yesterday)
+        plt.close()
+
+if __name__ == '__main__':
+    main(debug=False)
