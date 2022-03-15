@@ -34,7 +34,7 @@ def get_up_low_bounds(values, extend=0.5):
     center = (mx + mn) / 2
     low = center - rad * (1 + extend)
     up = center + rad * (1 + extend)
-    return [low, up]
+    return [low, up]    
 
 
 def main(today=None, yesterday=None, debug=True):
@@ -74,23 +74,48 @@ def main(today=None, yesterday=None, debug=True):
         for label in ax.get_xticklabels(which='major'):
             label.set(rotation=30, horizontalalignment='right')
     
+    window = 10
+    low_threshold = 100
+
     ax1.set_title('Downloads', loc='left', y=0.01, x=0.01, fontsize='small')
-    ax1.plot(datestamps, downloads)
-    ax1.set_ylim(get_up_low_bounds(downloads))
+    up_low_bounds = get_up_low_bounds(downloads)
+    ax1.plot(up_low_bounds, [low_threshold, low_threshold], color='black')
+    ax1.set_ylim(up_low_bounds)
     download_mean, download_std = downloads.mean(), downloads.std()
-    ax1.hlines(download_mean+download_std, yesterday, today, color="green", label=str(int(download_mean+download_std)))
-    ax1.hlines(download_mean, yesterday, today, color="black", label=str(int(download_mean)))
-    ax1.hlines(download_mean-download_std, yesterday, today, color="red", label=str(int(download_mean-download_std)))
+    rolling_downloads = ydata['Download (Mbps)'].rolling(window=window).mean()
+    rolling_download_stds = ydata['Download (Mbps)'].rolling(window=window).std()
+    rolling_datestamps = ydata['Datestamp'][rolling_downloads.notna()]
+    rolling_downloads = rolling_downloads.dropna()
+    rolling_download_stds = rolling_download_stds.dropna()
+    ax1.plot(rolling_datestamps, rolling_downloads + rolling_download_stds, color='green', alpha=0.3, label=str(int(download_mean+download_std)))
+    ax1.plot(rolling_datestamps, rolling_downloads, color='blue', alpha=0.3, label=str(int(download_mean)))
+    ax1.plot(rolling_datestamps, rolling_downloads - rolling_download_stds, color='red', alpha=0.3, label=str(int(download_mean-download_std)))
+    ax1.plot(datestamps, downloads, color='black')
     ax1.legend(loc="upper left")
+    
+    
+    # ax1.hlines(download_mean+download_std, yesterday, today, color="green", label=str(int(download_mean+download_std)))
+    # ax1.hlines(download_mean, yesterday, today, color="black", label=str(int(download_mean)))
+    # ax1.hlines(download_mean-download_std, yesterday, today, color="red", label=str(int(download_mean-download_std)))
 
     ax2.set_title('Uploads', loc='left', y=0.01, x=0.01, fontsize='small')
-    ax2.plot(datestamps, uploads)
-    ax2.set_ylim(get_up_low_bounds(uploads))
+    up_low_bounds = get_up_low_bounds(uploads)
+    ax2.plot(up_low_bounds, [low_threshold, low_threshold], color='black')
+    ax2.set_ylim(up_low_bounds)
     upload_mean, upload_std = uploads.mean(), uploads.std()
-    ax2.hlines(upload_mean+upload_std, yesterday, today, color="green", label=str(int(upload_mean+upload_std)))
-    ax2.hlines(upload_mean, yesterday, today, color="black", label=str(int(upload_mean)))
-    ax2.hlines(upload_mean-upload_std, yesterday, today, color="red", label=str(int(upload_mean-upload_std)))
+    rolling_uploads = ydata['Upload (Mbps)'].rolling(window=window).mean()
+    rolling_upload_stds = ydata['Upload (Mbps)'].rolling(window=window).std()
+    rolling_datestamps = ydata['Datestamp'][rolling_uploads.notna()]
+    rolling_uploads = rolling_uploads.dropna()
+    rolling_upload_stds = rolling_upload_stds.dropna()
+    ax2.plot(rolling_datestamps, rolling_uploads + rolling_upload_stds, color='green', alpha=0.3, label=str(int(upload_mean+upload_std)))
+    ax2.plot(rolling_datestamps, rolling_uploads, color='blue', alpha=0.3, label=str(int(upload_mean)))
+    ax2.plot(rolling_datestamps, rolling_uploads - rolling_upload_stds, color='red', alpha=0.3, label=str(int(upload_mean-upload_std)))
+    ax2.plot(datestamps, uploads, color='black')
     ax2.legend(loc="upper left")
+    # ax2.hlines(upload_mean+upload_std, yesterday, today, color="green", label=str(int(upload_mean+upload_std)))
+    # ax2.hlines(upload_mean, yesterday, today, color="black", label=str(int(upload_mean)))
+    # ax2.hlines(upload_mean-upload_std, yesterday, today, color="red", label=str(int(upload_mean-upload_std)))
     # fig.show()
 
 
@@ -100,6 +125,8 @@ def main(today=None, yesterday=None, debug=True):
     else:
         plt.savefig(png_template % yesterday)
         plt.close()
+    
+    return ydata
 
 if __name__ == '__main__':
     main(debug=False)
